@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Locate the user</title>
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.0/mapbox-gl-directions.js"></script>
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.0/mapbox-gl-directions.css" type="text/css">
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        #geolocate { position: absolute; top: 60px; left: 10px; z-index: 1; }
+        #geocoder { position: absolute; top: 10px; left: 10px; z-index: 1; border: 2px solid black; }
+        #featureSelect { position: absolute; top: 140px; left: 10px; z-index: 1; }
+        .custom-marker { background-size: cover; width: 30px; height: 30px; cursor: pointer; }
+        .mapboxgl-popup { max-width: 400px; font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif; background-color: red; }
+        .mapboxgl-popup-content { padding: 10px; }
+        .mapboxgl-popup-content h3 { margin: 0; }
+        #featureDropdown {
+        padding: 8px;
+        font-size: 16px;
+        border: 2px solid #45a049;
+        background-color: white;
+        color: #45a049;
+        cursor: pointer;
+        border-radius: 5px;
+        outline: none; /* Remove the default focus outline */
+    }
+
+    #featureDropdown:hover {
+        background-color: #45a049;
+        color: white;
+    }
+
+    #featureDropdown:focus {
+        border-color: #4CAF50; /* Change border color on focus */
+    }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <div id="geolocate" class="geolocate"></div>
+    <div id="geocoder" class="geocoder"></div>
+    <div id="featureSelect">
+        <select id="featureDropdown">
+            <option value="private">Private Cameras</option>
+            <option value="public">Public Cameras</option>
+            <option value="both">Both Cameras</option>
+            <option value="police">Police Stations</option>
+            <option value="nearestPolice">Nearest Police Station</option>
+        </select>
+    </div>
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiaGFycnlvcDk3NTIiLCJhIjoiY2xyOWFqZWR4MDB1eDJxcXkxdGZ2cHgxNCJ9.k7wHPckKD9rSF705bdp72Q';
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: [74.7146, 27.0286],
+            zoom: 9
+        });
+
+        // Add geocoder control to the map
+        const geocoder = new MapboxGeocoder({
+            accessToken: mapboxgl.accessToken,
+            mapboxgl: mapboxgl
+        });
+
+        // Add geolocate control to the map
+        const geolocate = new mapboxgl.GeolocateControl({
+            positionOptions: {
+                enableHighAccuracy: true
+            },
+            trackUserLocation: true,
+            showUserHeading: true
+        });
+
+        map.addControl(geolocate);
+
+        // Add directions control to the map
+        const directions = new MapboxDirections({
+            accessToken: mapboxgl.accessToken,
+            unit: 'metric',
+            profile: 'mapbox/driving',
+            controls: {
+                instructions: false,
+            },
+        });
+        map.addControl(new mapboxgl.NavigationControl());
+        map.addControl(directions, 'top-left');
+        map.addControl(geocoder);
+
+        let currentLayerId = null;
+
+        function updateMap(selectedFeature) {
+            if (currentLayerId) {
+                map.removeLayer(currentLayerId);
+                map.removeSource(currentLayerId);
+            }
+
+            switch (selectedFeature) {
+                case 'private':
+                    // Show private cameras
+                    addMarkers('Private');
+                    break;
+                case 'public':
+                    // Show public cameras
+                    addMarkers('Public');
+                    break;
+                case 'both':
+                    // Show both cameras
+                    addMarkers('Private');
+                    addMarkers('Public');
+                    break;
+                case 'police':
+                    // Show police stations
+                    addMarkers('Police');
+                    break;
+                case 'nearestPolice':
+                    // Show everything on the map
+                    addMarkers('Private');
+                    addMarkers('Public');
+                    addMarkers('Police');
+                    break;
+                default:
+                    console.error('Invalid feature selected.');
+            }
+        }
+
+        function addMarkers(markerType) {
+            fetch('markers.json')
+                .then(response => response.json())
+                .then(data => {
+                    data.markers.forEach(marker => {
+                        if (marker.properties.type === markerType) {
+                            const coordinates = marker.geometry.coordinates;
+                            const properties = marker.properties;
+
+                            // Add custom marker
+                            const newMarker = new mapboxgl.Marker({
+                                element: createCustomMarker(properties.type),
+                            })
+                                .setLngLat(coordinates)
+                                .addTo(map)
+                                .setPopup(new mapboxgl.Popup().setHTML(`<h3>${properties.name}</h3>${properties.description}`));
+
+                            newMarker.getElement().addEventListener('mouseenter', () => {
+                                newMarker.togglePopup();
+
+                                if (properties.type === 'Private') {
+                                    // Calculate the route to the nearest police station
+                                    calculateRouteToPoliceStation(newMarker.getLngLat(), data.markers);
+                                }
+                            });
+
+                            newMarker.getElement().addEventListener('mouseleave', () => {
+                                newMarker.togglePopup();
+                            });
+
+                            // Add path
+                            if (properties.path && properties.path.length > 1) {
+                                const pathCoordinates = properties.path.map(coord => ({
+                                    type: 'Point',
+                                    coordinates: coord
+                                }));
+
+                                // Add a source and layer for private cameras
+                                const sourceId = `path-${properties.name}`;
+                                const layerId = `path-${properties.name}`;
+
+                                map.addSource(sourceId, {
+                                    type: 'geojson',
+                                    data: {
+                                        type: 'FeatureCollection',
+                                        features: pathCoordinates
+                                    }
+                                });
+
+                                map.addLayer({
+                                    id: layerId,
+                                    type: 'line',
+                                    source: sourceId,
+                                    layout: {
+                                        'line-join': 'round',
+                                        'line-cap': 'round'
+                                    },
+                                    paint: {
+                                        'line-color': 'blue',
+                                        'line-width': 3
+                                    }
+                                });
+
+                                currentLayerId = layerId;
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching places data:', error));
+        }
+
+        // Handle feature selection dropdown
+        const featureDropdown = document.getElementById('featureDropdown');
+        featureDropdown.addEventListener('change', () => {
+            const selectedFeature = featureDropdown.value;
+            updateMap(selectedFeature);
+        });
+
+        // Function to calculate the route to the nearest police station
+        function calculateRouteToPoliceStation(privateMarkerLocation, allMarkers) {
+            // Assuming all police stations have type 'Police' in the data
+            const policeStations = allMarkers.filter(marker => marker.properties.type === 'Police');
+
+            if (policeStations.length === 0) {
+                console.error('No police stations found in the data.');
+                return;
+            }
+
+            // Find the nearest police station
+            let nearestPoliceStation = policeStations[0];
+            let minDistance = getDistance(privateMarkerLocation, nearestPoliceStation.geometry.coordinates);
+
+            for (let i = 1; i < policeStations.length; i++) {
+                const distance = getDistance(privateMarkerLocation, policeStations[i].geometry.coordinates);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestPoliceStation = policeStations[i];
+                }
+            }
+
+            // Set the destination as the nearest police station
+            setTimeout(() => {
+                map.flyTo({
+                    center: nearestPoliceStation.geometry.coordinates,
+                    essential: true
+                });
+
+                directions.setDestination(nearestPoliceStation.geometry.coordinates);
+            }, 1000); // Delay of 1000 milliseconds (1 second) before flying to the nearest police station
+        }
+
+        // Function to calculate distance between two coordinates using Haversine formula
+        function getDistance(coord1, coord2) {
+            const R = 6371; // Radius of the Earth in kilometers
+            const dLat = deg2rad(coord2[1] - coord1.lat);
+            const dLon = deg2rad(coord2[0] - coord1.lng);
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(deg2rad(coord1.lat)) * Math.cos(deg2rad(coord2[1])) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c; // Distance in kilometers
+
+            return distance;
+        }
+
+        // Function to convert degrees to radians
+        function deg2rad(deg) {
+            return deg * (Math.PI / 180);
+        }
+
+        // Function to show popup on feature hover
+        function showPopup(e, popup) {
+            // Change the cursor style as a UI indicator.
+            map.getCanvas().style.cursor = 'pointer';
+
+            // Copy coordinates array.
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            const description = e.features[0].properties.description;
+
+            // Ensure that if the map is zoomed out such that multiple
+            // copies of the feature are visible, the popup appears
+            // over the copy being pointed to.
+            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+            }
+
+            // Populate the popup and set its coordinates
+            // based on the feature found.
+            popup.setLngLat(coordinates).setHTML(description).addTo(map);
+        }
+
+        // Function to hide popup
+        function hidePopup(popup) {
+            map.getCanvas().style.cursor = '';
+            popup.remove();
+        }
+
+        // Function to create custom marker element
+        function createCustomMarker(type) {
+            const marker = document.createElement('div');
+            marker.className = 'custom-marker';
+
+            marker.style.backgroundImage = type === 'Private'
+                ? "url('marker.jpg')"
+                : type === 'Public'
+                    ? "url('images.jpg')"
+                    : type === 'Police'
+                        ? "url('green-marker.jpg')"
+                        : "url('green-marker.jpg')"; // Default to green marker for unknown types
+
+            return marker;
+        }
+    </script>
+</body>
+
+</html>

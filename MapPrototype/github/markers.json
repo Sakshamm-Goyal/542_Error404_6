@@ -1,0 +1,185 @@
+  {
+    "markers": [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [74.2179, 27.0238]
+            },
+            "properties": {
+                "name": "Public Camera 1",
+                "description": "This is a public camera , ID:56585",
+                "type": "Public"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [74.512, 27.0338]
+            },
+            "properties": {
+                "name": "Private Camera 1",
+                "description": "This is a private camera,ID 87987",
+                "type": "Private"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [74.619, 27.9038]
+            },
+            "properties": {
+                "name": "Public Camera 2",
+                "description": "This is another public camera,ID 24535",
+                "type": "Public"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [74.979, 27.0538]
+            },
+            "properties": {
+                "name": "Private Camera 2",
+                "description": "This is another private camera ID 54635",
+                "type": "Private"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [74.499, 27.0638]
+            },
+            "properties": {
+                "name": "Public Camera 3",
+                "description": "Yet another public camera ID: 19",
+                "type": "Public"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [74.912, 27.0738]
+            },
+            "properties": {
+                "name": "Private Camera 3",
+                "description": "Yet another private camera",
+                "type": "Private"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [74.529, 27.1838]
+            },
+            "properties": {
+                "name": "Public Camera 4",
+                "description": "One more public camera id 45",
+                "type": "Public"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [74.753, 27.0938]
+            },
+            "properties": {
+                "name": "Private Camera 4",
+                "description": "One more private camera",
+                "type": "Private"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [75.069, 27.1038]
+            },
+            "properties": {
+                "name": "Public Camera 5",
+                "description": "Last public camera ID: 98",
+                "type": "Public"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [74.28850,26.98109]
+            },
+            "properties": {
+                "name": "Private Camera 5",
+                "description": "Last private camera",
+                "type": "Private"
+            }
+        },
+        
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [75.29728,27.01781]
+            },
+            "properties": {
+                "name": "Police Station 1",
+                "description": "First police station",
+                "type": "Police"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [74.51925,27.26455]
+            },
+            "properties": {
+                "name": "Police Station 2",
+                "description": "Second police station",
+                "type": "Police"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [74.75877,27.06195]
+            },
+            "properties": {
+                "name": "Police Station 3",
+                "description": "Third police station",
+                "type": "Police"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [74.350, 27.1340]
+            },
+            "properties": {
+                "name": "Police Station 4",
+                "description": "Fourth police station",
+                "type": "Police"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [74.90280,26.97491]
+            },
+            "properties": {
+                "name": "Police Station 5",
+                "description": "Fifth police station",
+                "type": "Police"
+            }
+        }
+    ]
+  }
